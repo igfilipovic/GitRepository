@@ -1,0 +1,155 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd"> 
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+	<meta name="Author" content="Igor Filipovic, igor1982ster@gmail.com"/>
+	<meta name="Description" content="Ovo je vjeza za studentske potrebe i samim time neki dijelovi koda su posudeni iz tudih izvora.">
+	<meta http-equiv="Content-Type" content="text/html; charset=windows-1250"/>
+	<title>XML2JSON Converter</title>	
+	<script type="text/javascript" src="yahoo-dom-event.js"></script> 
+		<script type="text/javascript" src="connection_core-min.js"></script> 
+		<script type="text/javascript" src="ObjTree.js"></script> 
+		<script type="text/javascript" src="jkl-dumper.js"></script> 
+		<script type="text/javascript"> 
+			window.onload = function() {
+				YAHOO.util.Event.addListener("tojson", "click", toJson);
+				YAHOO.util.Event.addListener("toxml", "click", toXml); 
+			};
+			toJson = function() {
+				var xotree = new XML.ObjTree();
+			    var dumper = new JKL.Dumper(); 
+				var tree = xotree.parseXML(YAHOO.util.Dom.get("xml").value);
+				YAHOO.util.Dom.get("json").value = dumper.dump(tree);
+			};
+			toXml = function() {
+				var xotree = new XML.ObjTree();
+				var json = eval("(" + YAHOO.util.Dom.get("json").value + ")");
+				YAHOO.util.Dom.get("xml").value = formatXml(xotree.writeXML(json)); 
+			};
+			function getEXxml() {
+				YAHOO.util.Connect.asyncRequest("GET", "Elenco.xml",  {
+					success: function(o) {
+						YAHOO.util.Dom.get("xml").value = o.responseText;
+						YAHOO.util.Dom.removeClass("xml", "error");
+					},
+					failure: function(o) {
+						YAHOO.util.Dom.get("xml").value = o.status + " " + o.statusText;
+						YAHOO.util.Dom.addClass("xml", "error");
+					}
+				});
+			}
+			var formatXml = function (xml) {
+		        var reg = /(>)(<)(\/*)/g;
+		        var wsexp = / *(.*) +\n/g;
+		        var contexp = /(<.+>)(.+\n)/g;
+		        xml = xml.replace(reg, '$1\n$2$3').replace(wsexp, '$1\n').replace(contexp, '$1\n$2');
+		        var pad = 0;
+		        var formatted = '';
+		        var lines = xml.split('\n');
+		        var indent = 0;
+		        var lastType = 'other';
+		        var transitions = {
+		            'single->single': 0,
+		            'single->closing': -1,
+		            'single->opening': 0,
+		            'single->other': 0,
+		            'closing->single': 0,
+		            'closing->closing': -1,
+		            'closing->opening': 0,
+		            'closing->other': 0,
+		            'opening->single': 1,
+		            'opening->closing': 0,
+		            'opening->opening': 1,
+		            'opening->other': 1,
+		            'other->single': 0,
+		            'other->closing': -1,
+		            'other->opening': 0,
+		            'other->other': 0
+		        };
+		        for (var i = 0; i < lines.length; i++) {
+		            var ln = lines[i];
+		            var single = Boolean(ln.match(/<.+\/>/)); // da li je ovo jedini tag? pr. <br />
+		            var closing = Boolean(ln.match(/<\/.+>/)); // da li je ovo zatvarajuci tag? pr. </a>
+		            var opening = Boolean(ln.match(/<[^!].*>/)); // da li je ovo uopce tag? pr. ovo nije <!something>
+		            var type = single ? 'single' : closing ? 'closing' : opening ? 'opening' : 'other';
+		            var fromTo = lastType + '->' + type;
+		            lastType = type;
+		            var padding = '';
+		            indent += transitions[fromTo];
+		            for (var j = 0; j < indent; j++) {
+		                padding += '\t';
+		            }
+		            if (fromTo == 'opening->closing')
+		                formatted = formatted.substr(0, formatted.length - 1) + ln + '\n'; 
+		            else
+		                formatted += padding + ln + '\n';
+		        }
+		        return formatted;
+		    };
+		</script> 
+		<script type="text/javascript" src="lockmenu.js"></script> 
+</head>
+<body style="margin:0px;padding:0px;" >
+	<form name="forma" method="post">
+	<div style="padding:auto;margin:auto;"> 
+		<p style="padding-left:520px;">
+			<span style="font-size:30px;font-weight:bold;word-spacing:5px;">Konvereter&nbsp;XML&nbsp;»&nbsp;JSON&nbsp;&nbsp;i&nbsp;&nbsp;JSON&nbsp;»&nbsp;XML </span>
+		</p>
+		<p>
+			<span style="font-size:25px;padding-left:40px;">XML </span>
+			<span  style="font-size:25px;padding-left:730px;">JSON</span>
+		</p>
+		<p style="margin-left:5px;margin-top:-15px;">
+			<span>
+				<textarea rows="44" cols="95" id="xml" title="upisite XML" style="resize:none;">
+&lt;breakfast-menu&gt;
+ &lt;food&gt;
+  &lt;name&gt;Belgian Waffles&lt;/name&gt;
+  &lt;price&gt;$5.95&lt;/price&gt;
+  &lt;description&gt;two of our famous Belgian Waffles with plenty of real maple syrup&lt;/description&gt;
+  &lt;calories&gt;650&lt;/calories&gt;
+ &lt;/food&gt;
+ &lt;food&gt;
+  &lt;name&gt;Strawberry Belgian Waffles&lt;/name&gt;
+  &lt;price&gt;$7.95&lt;/price&gt;
+  &lt;description&gt;light Belgian waffles covered with strawberrys and whipped cream&lt;/description&gt;
+  &lt;calories&gt;900&lt;/calories&gt;
+ &lt;/food&gt;
+  &lt;food&gt;
+  &lt;name&gt;Berry-Berry Belgian Waffles&lt;/name&gt;
+  &lt;price&gt;$8.95&lt;/price&gt;
+  &lt;description&gt;light Belgian waffles covered with an assortment of fresh berries and whipped cream&lt;/description&gt;
+  &lt;calories&gt;900&lt;/calories&gt;
+ &lt;/food&gt;
+ &lt;food&gt;
+  &lt;name&gt;French Toast&lt;/name&gt;
+  &lt;price&gt;$4.50&lt;/price&gt;
+  &lt;description&gt;thick slices made from our homemade sourdough bread&lt;/description&gt;
+  &lt;calories&gt;600&lt;/calories&gt;
+ &lt;/food&gt;
+ &lt;food&gt;
+  &lt;name&gt;Homestyle Breakfast&lt;/name&gt;
+  &lt;price&gt;$6.95&lt;/price&gt;
+  &lt;description&gt;two eggs, bacon or sausage, toast, and our ever-popular hash browns&lt;/description&gt;
+  &lt;calories&gt;950&lt;/calories&gt;
+ &lt;/food&gt;
+&lt;/breakfast-menu&gt;
+				</textarea>
+				<textarea rows="44" cols="95" id="json" title="upisite JSON" style="resize:none;white-space:nowrap;"></textarea>
+			</span>
+		</p>
+		<p style="margin-top:-20px;">
+			<span style="margin-left:340px;">
+				<input type="button" style="width:100px;height:40px;" id="tojson" title="konvertiraj u JSON" value="XML -> JSON" />
+			</span>
+			<span style="padding-left:270px;">	
+				<input style="width:150px;height:60px;" type="button" title="klikni da počistiš JSON unos" onmouseover="javascript:document.forma.xml.value=''" onclick="javascript:document.forma.json.value=''" value="Očisti" />
+			</span>
+			<span style="padding-left:270px;">
+				<input type="button" style="width:100px;height:40px;" id="toxml" title="konvertiraj u XML" value="JSON -> XML" />
+			</span>
+			
+		</p>
+	</div>
+	</form>
+</body>
+</html>
